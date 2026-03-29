@@ -1,122 +1,81 @@
-// ============================================================
-// AI MENTOR API ROUTE
-// ============================================================
-// 
-// This route handles AI-powered mentoring responses.
-// Currently DISABLED - the frontend uses mock responses.
-//
-// TO ENABLE AI INTEGRATION:
-// 1. Uncomment the code below
-// 2. Set up your AI provider API key:
-//    - For OpenAI: Set OPENAI_API_KEY environment variable
-//    - For other providers: Configure accordingly
-// 3. Update the frontend (app/dashboard/ai-mentor/page.tsx):
-//    - Uncomment the useChat hook
-//    - Remove the mock response implementation
-//
-// SUPPORTED PROVIDERS (via Vercel AI Gateway):
-// - openai/gpt-4o-mini (recommended for cost-effectiveness)
-// - openai/gpt-4o (better quality, higher cost)
-// - anthropic/claude-3-haiku-20240307 (alternative)
-//
-// See: https://sdk.vercel.ai/docs for AI SDK documentation
-// ============================================================
-
 import { NextResponse } from "next/server"
-// import { streamText, convertToModelMessages } from "ai"
-// import type { Grade, Achievement, User } from "@/lib/types/database"
+import OpenAI from "openai"
+
+// Инициализируем клиента OpenAI, но направляем его на OpenRouter
+const openai = new OpenAI({
+  baseURL: "https://openrouter.ai/api/v1",
+  apiKey: process.env.OPENROUTER_API_KEY, // Твой ключ от OpenRouter
+  // defaultHeaders нужно передавать по требованию OpenRouter (для статистики)
+  defaultHeaders: {
+    "HTTP-Referer": process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000",
+    "X-Title": "Akbobek AI Mentor",
+  }
+})
 
 export async function POST(req: Request) {
-  // Return a message indicating AI is not configured
-  return NextResponse.json(
-    { 
-      error: "AI Mentor not configured",
-      message: "Please set up AI integration. See SETUP.md for instructions."
-    },
-    { status: 503 }
-  )
+  try {
+    const { messages, studentData } = await req.json()
+    const { grades, achievements, student } = studentData
 
-  // ============================================================
-  // UNCOMMENT BELOW TO ENABLE AI FUNCTIONALITY
-  // ============================================================
-  /*
-  const { messages, studentData } = await req.json()
-
-  const { grades, achievements, student } = studentData as {
-    grades: Grade[]
-    achievements: Achievement[]
-    student: User
-  }
-
-  // Build context about student performance
-  const subjectAverages: Record<string, { sum: number; count: number }> = {}
-  for (const grade of grades) {
-    if (!subjectAverages[grade.subject]) {
-      subjectAverages[grade.subject] = { sum: 0, count: 0 }
+    // Считаем средние по предметам
+    const subjectAverages: Record<string, { sum: number; count: number }> = {}
+    for (const grade of grades) {
+      if (!subjectAverages[grade.subject]) {
+        subjectAverages[grade.subject] = { sum: 0, count: 0 }
+      }
+      subjectAverages[grade.subject].sum += (grade.score / grade.max_score) * 100
+      subjectAverages[grade.subject].count++
     }
-    subjectAverages[grade.subject].sum += (grade.score / grade.max_score) * 100
-    subjectAverages[grade.subject].count++
+
+    const subjectSummary = Object.entries(subjectAverages)
+      .map(([s, { sum, count }]) => `${s}: ${Math.round(sum / count)}%`)
+      .join("\n")
+
+    const achievementList = achievements
+      .map((a: any) => `- ${a.title} (${a.category}, ${a.points} баллов)`)
+      .join("\n")
+
+    const systemPrompt = `Ты AI-ментор школы Акбобек в Казахстане. Помогаешь ученикам с учёбой и карьерными советами.
+
+УЧЕНИК: ${student.full_name}, класс: ${student.grade || "N/A"}
+
+УСПЕВАЕМОСТЬ:
+${subjectSummary || "Оценок пока нет"}
+
+ДОСТИЖЕНИЯ:
+${achievementList || "Нет достижений"}
+
+Отвечай тепло, по-дружески, давай конкретные советы. Отвечай на том же языке, на котором пишет ученик (казахский, русский или английский). Максимум 3 абзаца.`
+
+    // Формируем историю чата для формата OpenAI
+    const formattedMessages = messages.map((m: any) => ({
+      // У OpenAI роли называются "user" и "assistant" (а не "model")
+      role: m.role === "user" ? "user" : "assistant",
+      content: m.content,
+    }))
+
+    // Добавляем системный промпт в самое начало массива сообщений
+    formattedMessages.unshift({
+      role: "system",
+      content: systemPrompt,
+    })
+
+    // Делаем запрос к ИИ
+    const response = await openai.chat.completions.create({
+      // Выбираем полностью БЕСПЛАТНУЮ модель на OpenRouter
+      // Отличные бесплатные варианты:
+      // "google/gemma-2-9b-it:free" (от Google)
+      // "meta-llama/llama-3-8b-instruct:free" (от Meta)
+      model: "google/gemma-2-9b-it:free", 
+      messages: formattedMessages,
+      temperature: 0.7, // Настройка креативности (от 0 до 2)
+    })
+
+    const text = response.choices[0].message.content
+
+    return NextResponse.json({ reply: text })
+  } catch (error: any) {
+    console.error("AI Mentor error:", error)
+    return NextResponse.json({ error: error.message }, { status: 500 })
   }
-
-  const subjectSummary = Object.entries(subjectAverages)
-    .map(([subject, { sum, count }]) => `${subject}: ${Math.round(sum / count)}%`)
-    .join("\n")
-
-  const achievementList = achievements
-    .map(a => `- ${a.title} (${a.category}, ${a.points} points)`)
-    .join("\n")
-
-  const strongSubjects = Object.entries(subjectAverages)
-    .filter(([, { sum, count }]) => sum / count >= 85)
-    .map(([subject]) => subject)
-    .join(", ")
-
-  const weakSubjects = Object.entries(subjectAverages)
-    .filter(([, { sum, count }]) => sum / count < 75)
-    .map(([subject]) => subject)
-    .join(", ")
-
-  const systemPrompt = `You are an AI Educational Mentor for Aqbobek Lyceum, a prestigious school in Kazakhstan. Your role is to provide personalized academic guidance and support to students.
-
-STUDENT PROFILE:
-- Name: ${student.full_name}
-- Grade: ${student.grade || "N/A"}
-- Class: ${student.class_name || "N/A"}
-
-ACADEMIC PERFORMANCE (Current Quarter Averages):
-${subjectSummary || "No grades available yet"}
-
-STRENGTHS: ${strongSubjects || "Still analyzing performance"}
-AREAS FOR IMPROVEMENT: ${weakSubjects || "No significant concerns"}
-
-ACHIEVEMENTS:
-${achievementList || "No achievements recorded yet"}
-
-YOUR RESPONSIBILITIES:
-1. ACADEMIC SUPPORT: Analyze grades and provide specific study strategies
-2. CAREER GUIDANCE: Based on their strengths, suggest potential career paths and fields of study
-3. MOTIVATION: Encourage students and celebrate their achievements
-4. GOAL SETTING: Help them set realistic academic goals
-5. IMPROVEMENT PLANS: For weak subjects, provide actionable improvement strategies
-
-GUIDELINES:
-- Be warm, encouraging, and supportive while remaining professional
-- Provide specific, actionable advice based on their actual performance data
-- Reference their actual grades and achievements in your responses
-- Consider the Kazakhstani education system and university entrance requirements (UNT/ENT)
-- Suggest extracurricular activities that align with their interests
-- When discussing careers, consider both local and international opportunities
-- Keep responses concise but helpful (2-3 paragraphs max unless asked for more detail)
-
-Remember: You're not just an AI - you're a mentor who genuinely cares about this student's success.`
-
-  const result = streamText({
-    model: "openai/gpt-4o-mini", // Change model as needed
-    system: systemPrompt,
-    messages: await convertToModelMessages(messages),
-    maxOutputTokens: 1000,
-  })
-
-  return result.toUIMessageStreamResponse()
-  */
 }
