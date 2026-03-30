@@ -1,8 +1,12 @@
+import logging
+
 from fastapi import HTTPException, status
 
 import httpx
 
 from app.core.config import settings
+
+logger = logging.getLogger(__name__)
 
 
 class AIMentorService:
@@ -90,9 +94,15 @@ Rules:
             )
 
         if response.status_code >= 400:
+            provider_error = response.text.strip() or "Empty response body"
+            logger.error(
+                "Gemini request failed with status %s: %s",
+                response.status_code,
+                provider_error,
+            )
             raise HTTPException(
                 status_code=status.HTTP_502_BAD_GATEWAY,
-                detail="AI provider request failed.",
+                detail=f"Gemini request failed with status {response.status_code}: {provider_error}",
             )
 
         payload = response.json()
