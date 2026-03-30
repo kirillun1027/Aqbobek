@@ -1,0 +1,27 @@
+services:
+  - type: web
+    name: akbobek-backend
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install .
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    plan: free
+    envVars:
+      - key: APP_NAME
+        value: Aqbobek Backend
+      - key: APP_VERSION
+        value: 0.1.0
+      - key: API_PREFIX
+        value: /api
+      - key: CORS_ORIGINS
+        value: ["http://localhost:3000","https://your-vercel-project.vercel.app"]
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GEMINI_MODEL
+        value: gemini-2.0-flash
