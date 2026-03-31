@@ -18,7 +18,7 @@
   - `SUPABASE_ANON_KEY`
   - `SUPABASE_SERVICE_ROLE_KEY`
   - `GEMINI_API_KEY`
-  - `GEMINI_MODEL=gemini-2.0-flash`
+  - `GEMINI_MODEL=gemini-1.5-flash`
   - `CORS_ORIGINS=["https://your-vercel-project.vercel.app"]`
 
 The backend URL will be:
