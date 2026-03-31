@@ -14,7 +14,8 @@ import {
   Trophy,
   Calendar,
   ArrowRight,
-  BookOpen
+  BookOpen,
+  RefreshCw,
 } from "lucide-react"
 import type { User, Grade, Event } from "@/lib/types/database"
 import { calculateSubjectAverage } from "@/lib/utils/analytics"
@@ -35,19 +36,22 @@ export function TeacherDashboard({ user }: TeacherDashboardProps) {
   const [events, setEvents] = useState<Event[]>([])
   const [atRiskStudents, setAtRiskStudents] = useState<{ student: User; average: number; concernSubjects: string[] }[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState("")
 
-  useEffect(() => {
-    async function loadData() {
-      const [studentsData, gradesData, eventsData] = await Promise.all([
+  async function loadData() {
+    try {
+      setIsLoading(true)
+      setError("")
+      const [studentsData, gradesData, eventsData, atRisk] = await Promise.all([
         getStudentsFromBackend(),
         getAllGradesFromBackend(3),
         getEventsFromBackend(true),
+        getAtRiskStudentsFromBackend(70, 3),
       ])
 
       setStudents(studentsData)
       setGrades(gradesData)
       setEvents(eventsData.slice(0, 3))
-      const atRisk = await getAtRiskStudentsFromBackend(70, 3)
       setAtRiskStudents(
         atRisk.map(item => ({
           student: {
@@ -64,10 +68,15 @@ export function TeacherDashboard({ user }: TeacherDashboardProps) {
           concernSubjects: item.concern_subjects,
         }))
       )
+    } catch (loadError) {
+      setError(loadError instanceof Error ? loadError.message : "Failed to load teacher dashboard.")
+    } finally {
       setIsLoading(false)
     }
+  }
 
-    loadData()
+  useEffect(() => {
+    void loadData()
   }, [])
 
   if (isLoading) {
@@ -75,6 +84,26 @@ export function TeacherDashboard({ user }: TeacherDashboardProps) {
       <div className="flex items-center justify-center h-64">
         <div className="w-8 h-8 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin" />
       </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Teacher Dashboard</CardTitle>
+          <CardDescription>Overview of your students and class performance</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            {error}
+          </div>
+          <Button onClick={() => void loadData()} className="gap-2">
+            <RefreshCw className="h-4 w-4" />
+            Retry
+          </Button>
+        </CardContent>
+      </Card>
     )
   }
 

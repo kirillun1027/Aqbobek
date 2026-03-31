@@ -9,12 +9,13 @@ import { Badge } from "@/components/ui/badge"
 import { 
   BookOpen, 
   Trophy, 
-  TrendingUp, 
+  TrendingUp,
   Calendar, 
   MessageSquare, 
   ArrowRight,
   Star,
-  Target
+  Target,
+  RefreshCw,
 } from "lucide-react"
 import type { User, Grade, Achievement, Event } from "@/lib/types/database"
 import { calculateSubjectAverage } from "@/lib/utils/analytics"
@@ -35,9 +36,12 @@ export function StudentDashboard({ user }: StudentDashboardProps) {
   const [events, setEvents] = useState<Event[]>([])
   const [ranking, setRanking] = useState<{ rank: number; total: number } | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState("")
 
-  useEffect(() => {
-    async function loadData() {
+  async function loadData() {
+    try {
+      setIsLoading(true)
+      setError("")
       const [gradesData, achievementsData, eventsData, rankingsData] = await Promise.all([
         getGradesForStudentFromBackend(user.id, 3),
         getAchievementsForStudentFromBackend(user.id),
@@ -48,14 +52,18 @@ export function StudentDashboard({ user }: StudentDashboardProps) {
       setGrades(gradesData)
       setAchievements(achievementsData)
       setEvents(eventsData.slice(0, 3))
-      
+
       const myRank = rankingsData.findIndex(r => r.student_id === user.id) + 1
       setRanking({ rank: myRank || rankingsData.length, total: rankingsData.length })
-      
+    } catch (loadError) {
+      setError(loadError instanceof Error ? loadError.message : "Failed to load student dashboard.")
+    } finally {
       setIsLoading(false)
     }
+  }
 
-    loadData()
+  useEffect(() => {
+    void loadData()
   }, [user.id])
 
   if (isLoading) {
@@ -63,6 +71,26 @@ export function StudentDashboard({ user }: StudentDashboardProps) {
       <div className="flex items-center justify-center h-64">
         <div className="w-8 h-8 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin" />
       </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Student Dashboard</CardTitle>
+          <CardDescription>Your academic overview for this quarter</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            {error}
+          </div>
+          <Button onClick={() => void loadData()} className="gap-2">
+            <RefreshCw className="h-4 w-4" />
+            Retry
+          </Button>
+        </CardContent>
+      </Card>
     )
   }
 

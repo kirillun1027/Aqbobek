@@ -13,7 +13,8 @@ import {
   Calendar, 
   ArrowRight,
   User,
-  Star
+  Star,
+  RefreshCw,
 } from "lucide-react"
 import type { User as UserType, Grade, Achievement, Event } from "@/lib/types/database"
 import { calculateSubjectAverage } from "@/lib/utils/analytics"
@@ -36,20 +37,23 @@ export function ParentDashboard({ user }: ParentDashboardProps) {
   const [events, setEvents] = useState<Event[]>([])
   const [ranking, setRanking] = useState<{ rank: number; total: number } | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState("")
 
-  useEffect(() => {
-    async function loadData() {
+  async function loadData() {
+    try {
+      setIsLoading(true)
+      setError("")
       const childId = user.linked_student_ids?.[0]
       if (!childId) {
-        setIsLoading(false)
+        setChild(null)
         return
       }
 
       const childData = await getStudentByIdFromBackend(childId)
-      
+
       if (childData) {
         setChild(childData)
-        
+
         const [gradesData, achievementsData, eventsData, rankingsData] = await Promise.all([
           getGradesForStudentFromBackend(childData.id, 3),
           getAchievementsForStudentFromBackend(childData.id),
@@ -60,15 +64,19 @@ export function ParentDashboard({ user }: ParentDashboardProps) {
         setGrades(gradesData)
         setAchievements(achievementsData)
         setEvents(eventsData.slice(0, 3))
-        
+
         const childRank = rankingsData.findIndex(r => r.student_id === childData.id) + 1
         setRanking({ rank: childRank || rankingsData.length, total: rankingsData.length })
       }
-      
+    } catch (loadError) {
+      setError(loadError instanceof Error ? loadError.message : "Failed to load parent dashboard.")
+    } finally {
       setIsLoading(false)
     }
+  }
 
-    loadData()
+  useEffect(() => {
+    void loadData()
   }, [user])
 
   if (isLoading) {
@@ -76,6 +84,26 @@ export function ParentDashboard({ user }: ParentDashboardProps) {
       <div className="flex items-center justify-center h-64">
         <div className="w-8 h-8 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin" />
       </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Parent Dashboard</CardTitle>
+          <CardDescription>Monitoring your child&apos;s progress</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            {error}
+          </div>
+          <Button onClick={() => void loadData()} className="gap-2">
+            <RefreshCw className="h-4 w-4" />
+            Retry
+          </Button>
+        </CardContent>
+      </Card>
     )
   }
 
