@@ -1,6 +1,6 @@
 from fastapi import HTTPException, status
 
-from app.db.supabase import get_supabase_admin_client
+from app.db.supabase import execute_with_retry, get_supabase_admin_client
 from app.models.domain import AchievementCreate, AchievementRecord, UserProfile
 
 
@@ -21,7 +21,7 @@ class AchievementService:
                 detail="Only teachers or admins can view all achievements.",
             )
 
-        response = query.execute()
+        response = execute_with_retry(lambda: query)
         return [AchievementRecord.model_validate(item) for item in response.data or []]
 
     def create_achievement(
@@ -37,14 +37,15 @@ class AchievementService:
 
         client = get_supabase_admin_client()
         response = (
-            client.table("achievements")
-            .insert(
-                {
-                    **payload.model_dump(mode="json"),
-                    "awarded_by": str(current_user.id),
-                }
+            execute_with_retry(
+                lambda: client.table("achievements")
+                .insert(
+                    {
+                        **payload.model_dump(mode="json"),
+                        "awarded_by": str(current_user.id),
+                    }
+                )
             )
-            .execute()
         )
 
         created = (response.data or [None])[0]

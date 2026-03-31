@@ -1,6 +1,6 @@
 from fastapi import HTTPException, status
 
-from app.db.supabase import get_supabase_admin_client
+from app.db.supabase import execute_with_retry, get_supabase_admin_client
 from app.models.domain import EventCreate, EventRecord, UserProfile
 
 
@@ -10,7 +10,7 @@ class EventService:
         query = client.table("events").select("*").order("start_date")
         if featured is True:
             query = query.eq("is_featured", True)
-        response = query.execute()
+        response = execute_with_retry(lambda: query)
         return [EventRecord.model_validate(item) for item in response.data or []]
 
     def create_event(
@@ -26,14 +26,15 @@ class EventService:
 
         client = get_supabase_admin_client()
         response = (
-            client.table("events")
-            .insert(
-                {
-                    **payload.model_dump(mode="json"),
-                    "created_by": str(current_user.id),
-                }
+            execute_with_retry(
+                lambda: client.table("events")
+                .insert(
+                    {
+                        **payload.model_dump(mode="json"),
+                        "created_by": str(current_user.id),
+                    }
+                )
             )
-            .execute()
         )
 
         created = (response.data or [None])[0]

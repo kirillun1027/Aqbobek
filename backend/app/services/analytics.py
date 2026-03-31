@@ -2,7 +2,7 @@ from collections import defaultdict
 
 from fastapi import HTTPException, status
 
-from app.db.supabase import get_supabase_admin_client
+from app.db.supabase import execute_with_retry, get_supabase_admin_client
 from app.models.domain import (
     AchievementRecord,
     AnalyticsOverview,
@@ -19,11 +19,11 @@ from app.models.domain import (
 class AnalyticsService:
     def get_overview(self, quarter: int = 3) -> AnalyticsOverview:
         client = get_supabase_admin_client()
-        students_response = client.table("users").select("id", count="exact").eq("role", "student").execute()
-        teachers_response = client.table("users").select("id", count="exact").eq("role", "teacher").execute()
-        parents_response = client.table("users").select("id", count="exact").eq("role", "parent").execute()
-        events_response = client.table("events").select("id", count="exact").execute()
-        achievements_response = client.table("achievements").select("id", count="exact").execute()
+        students_response = execute_with_retry(lambda: client.table("users").select("id", count="exact").eq("role", "student"))
+        teachers_response = execute_with_retry(lambda: client.table("users").select("id", count="exact").eq("role", "teacher"))
+        parents_response = execute_with_retry(lambda: client.table("users").select("id", count="exact").eq("role", "parent"))
+        events_response = execute_with_retry(lambda: client.table("events").select("id", count="exact"))
+        achievements_response = execute_with_retry(lambda: client.table("achievements").select("id", count="exact"))
         grades = self._get_grades(quarter=quarter)
 
         school_average = round(
@@ -149,11 +149,12 @@ class AnalyticsService:
     def _get_students(self) -> list[UserProfile]:
         client = get_supabase_admin_client()
         response = (
-            client.table("users")
-            .select("*")
-            .eq("role", "student")
-            .order("full_name")
-            .execute()
+            execute_with_retry(
+                lambda: client.table("users")
+                .select("*")
+                .eq("role", "student")
+                .order("full_name")
+            )
         )
         return [UserProfile.model_validate(item) for item in response.data or []]
 
@@ -162,15 +163,15 @@ class AnalyticsService:
         query = client.table("grades").select("*").order("date", desc=True)
         if quarter is not None:
             query = query.eq("quarter", quarter)
-        response = query.execute()
+        response = execute_with_retry(lambda: query)
         return [GradeRecord.model_validate(item) for item in response.data or []]
 
     def _get_achievements(self) -> list[AchievementRecord]:
         client = get_supabase_admin_client()
-        response = client.table("achievements").select("*").order("date", desc=True).execute()
+        response = execute_with_retry(lambda: client.table("achievements").select("*").order("date", desc=True))
         return [AchievementRecord.model_validate(item) for item in response.data or []]
 
     def _get_events(self) -> list[EventRecord]:
         client = get_supabase_admin_client()
-        response = client.table("events").select("*").order("start_date").execute()
+        response = execute_with_retry(lambda: client.table("events").select("*").order("start_date"))
         return [EventRecord.model_validate(item) for item in response.data or []]

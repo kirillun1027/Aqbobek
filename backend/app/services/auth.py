@@ -1,7 +1,7 @@
 from fastapi import HTTPException, status
 from supabase_auth.errors import AuthApiError
 
-from app.db.supabase import get_supabase_admin_client, get_supabase_client
+from app.db.supabase import execute_with_retry, get_supabase_admin_client, get_supabase_client
 from app.models.auth import AuthSession, LoginRequest
 from app.models.domain import UserProfile
 
@@ -60,11 +60,12 @@ class AuthService:
     def _get_profile_by_user_id(self, user_id: str) -> UserProfile:
         admin_client = get_supabase_admin_client()
         response = (
-            admin_client.table("users")
-            .select("*")
-            .eq("id", user_id)
-            .single()
-            .execute()
+            execute_with_retry(
+                lambda: admin_client.table("users")
+                .select("*")
+                .eq("id", user_id)
+                .single()
+            )
         )
 
         if not response.data:

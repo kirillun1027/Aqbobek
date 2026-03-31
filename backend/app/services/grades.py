@@ -1,6 +1,6 @@
 from fastapi import HTTPException, status
 
-from app.db.supabase import get_supabase_admin_client
+from app.db.supabase import execute_with_retry, get_supabase_admin_client
 from app.models.domain import GradeCreate, GradeRecord, UserProfile
 
 
@@ -26,7 +26,7 @@ class GradeService:
         if quarter is not None:
             query = query.eq("quarter", quarter)
 
-        response = query.execute()
+        response = execute_with_retry(lambda: query)
         return [GradeRecord.model_validate(item) for item in response.data or []]
 
     def create_grade(
@@ -42,14 +42,15 @@ class GradeService:
 
         client = get_supabase_admin_client()
         response = (
-            client.table("grades")
-            .insert(
-                {
-                    **payload.model_dump(mode="json"),
-                    "teacher_id": str(current_user.id),
-                }
+            execute_with_retry(
+                lambda: client.table("grades")
+                .insert(
+                    {
+                        **payload.model_dump(mode="json"),
+                        "teacher_id": str(current_user.id),
+                    }
+                )
             )
-            .execute()
         )
 
         created = (response.data or [None])[0]
