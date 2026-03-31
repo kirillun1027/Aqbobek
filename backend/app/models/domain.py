@@ -162,3 +162,84 @@ class AnalyticsOverview(BaseModel):
 
 
 AtRiskTrend = Literal["up", "down", "stable"]
+
+
+class ScheduleLessonType(StrEnum):
+    LESSON = "lesson"
+    STREAM = "stream"
+    EVENT = "event"
+
+
+class ScheduleEntryStatus(StrEnum):
+    SCHEDULED = "scheduled"
+    REASSIGNED = "reassigned"
+    UNFILLED = "unfilled"
+
+
+class ScheduleTeacher(BaseModel):
+    id: str
+    name: str
+    subjects: list[str]
+    unavailable_slots: list[str] = Field(default_factory=list)
+
+
+class ScheduleRoom(BaseModel):
+    id: str
+    name: str
+    capacity: int
+    features: list[str] = Field(default_factory=list)
+
+
+class ScheduleRequirement(BaseModel):
+    id: str
+    class_name: str
+    subject: str
+    weekly_lessons: int = Field(ge=1)
+    preferred_slots: list[str] = Field(default_factory=list)
+    allowed_teacher_ids: list[str]
+    room_features: list[str] = Field(default_factory=list)
+    lesson_type: ScheduleLessonType = ScheduleLessonType.LESSON
+    group_label: str | None = None
+
+
+class ScheduleEntry(BaseModel):
+    id: str
+    slot_id: str
+    day: str
+    period: int
+    class_name: str
+    subject: str
+    teacher_id: str | None = None
+    teacher_name: str | None = None
+    room_id: str | None = None
+    room_name: str | None = None
+    lesson_type: ScheduleLessonType = ScheduleLessonType.LESSON
+    group_label: str | None = None
+    status: ScheduleEntryStatus = ScheduleEntryStatus.SCHEDULED
+    note: str | None = None
+
+
+class ScheduleChange(BaseModel):
+    entry_id: str
+    change_type: str
+    message: str
+
+
+class ScheduleDataset(BaseModel):
+    classes: list[str]
+    slots: list[str]
+    teachers: list[ScheduleTeacher]
+    rooms: list[ScheduleRoom]
+    requirements: list[ScheduleRequirement]
+
+
+class ScheduleGenerationResult(BaseModel):
+    dataset: ScheduleDataset
+    entries: list[ScheduleEntry]
+    changes: list[ScheduleChange] = Field(default_factory=list)
+    unresolved_requirements: list[str] = Field(default_factory=list)
+    summary: str
+
+
+class ScheduleRegenerationRequest(BaseModel):
+    absent_teacher_id: str

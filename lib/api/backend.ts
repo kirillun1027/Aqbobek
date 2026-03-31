@@ -1,4 +1,11 @@
-import type { Achievement, Event, Grade, User } from "@/lib/types/database"
+import type {
+  Achievement,
+  Event,
+  Grade,
+  ScheduleDataset,
+  ScheduleGenerationResult,
+  User,
+} from "@/lib/types/database"
 
 interface BackendUser {
   id: string
@@ -332,4 +339,28 @@ export async function chatWithAIMentor(messages: Array<{ role: "user" | "assista
     }),
   })
   return (await response.json()) as { message: string }
+}
+
+export async function getScheduleContextFromBackend() {
+  const response = await authorizedFetch("/schedule/context", {
+    method: "GET",
+    headers: {},
+  })
+  return (await response.json()) as ScheduleDataset
+}
+
+export async function generateScheduleInBackend() {
+  const response = await authorizedFetch("/schedule/generate", {
+    method: "POST",
+    body: JSON.stringify({}),
+  })
+  return (await response.json()) as ScheduleGenerationResult
+}
+
+export async function rebuildScheduleForAbsenceInBackend(absentTeacherId: string) {
+  const response = await authorizedFetch("/schedule/rebuild", {
+    method: "POST",
+    body: JSON.stringify({ absent_teacher_id: absentTeacherId }),
+  })
+  return (await response.json()) as ScheduleGenerationResult
 }

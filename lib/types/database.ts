@@ -63,6 +63,74 @@ export interface AIMessage {
   timestamp: string
 }
 
+export type ScheduleLessonType = "lesson" | "stream" | "event"
+export type ScheduleEntryStatus = "scheduled" | "reassigned" | "unfilled"
+
+export interface ScheduleTeacher {
+  id: string
+  name: string
+  subjects: string[]
+  unavailable_slots: string[]
+}
+
+export interface ScheduleRoom {
+  id: string
+  name: string
+  capacity: number
+  features: string[]
+}
+
+export interface ScheduleRequirement {
+  id: string
+  class_name: string
+  subject: string
+  weekly_lessons: number
+  preferred_slots: string[]
+  allowed_teacher_ids: string[]
+  room_features: string[]
+  lesson_type: ScheduleLessonType
+  group_label?: string | null
+}
+
+export interface ScheduleDataset {
+  classes: string[]
+  slots: string[]
+  teachers: ScheduleTeacher[]
+  rooms: ScheduleRoom[]
+  requirements: ScheduleRequirement[]
+}
+
+export interface ScheduleEntry {
+  id: string
+  slot_id: string
+  day: string
+  period: number
+  class_name: string
+  subject: string
+  teacher_id?: string | null
+  teacher_name?: string | null
+  room_id?: string | null
+  room_name?: string | null
+  lesson_type: ScheduleLessonType
+  group_label?: string | null
+  status: ScheduleEntryStatus
+  note?: string | null
+}
+
+export interface ScheduleChange {
+  entry_id: string
+  change_type: string
+  message: string
+}
+
+export interface ScheduleGenerationResult {
+  dataset: ScheduleDataset
+  entries: ScheduleEntry[]
+  changes: ScheduleChange[]
+  unresolved_requirements: string[]
+  summary: string
+}
+
 // Supabase Database schema type
 export interface Database {
   public: {

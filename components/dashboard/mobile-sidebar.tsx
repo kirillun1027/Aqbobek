@@ -24,6 +24,7 @@ import {
   Monitor,
   BarChart3,
   PlusCircle,
+  CalendarDays,
   X,
 } from "lucide-react"
 
@@ -99,6 +100,12 @@ const navItems: NavItem[] = [
     label: "Manage Events",
     href: "/dashboard/manage-events",
     icon: <Calendar className="h-5 w-5" />,
+    roles: ["admin"],
+  },
+  {
+    label: "Smart Schedule",
+    href: "/dashboard/schedule",
+    icon: <CalendarDays className="h-5 w-5" />,
     roles: ["admin"],
   },
   {

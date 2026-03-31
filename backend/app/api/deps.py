@@ -9,6 +9,7 @@ from app.services.achievements import AchievementService
 from app.services.auth import AuthService
 from app.services.events import EventService
 from app.services.grades import GradeService
+from app.services.schedule import ScheduleService
 from app.services.users import UserService
 
 
@@ -40,6 +41,10 @@ def get_ai_mentor_service() -> AIMentorService:
     return AIMentorService()
 
 
+def get_schedule_service() -> ScheduleService:
+    return ScheduleService()
+
+
 def get_bearer_token(
     authorization: Annotated[str | None, Header()] = None,
 ) -> str:
@@ -66,6 +71,7 @@ AchievementServiceDep = Annotated[AchievementService, Depends(get_achievement_se
 EventServiceDep = Annotated[EventService, Depends(get_event_service)]
 AnalyticsServiceDep = Annotated[AnalyticsService, Depends(get_analytics_service)]
 AIMentorServiceDep = Annotated[AIMentorService, Depends(get_ai_mentor_service)]
+ScheduleServiceDep = Annotated[ScheduleService, Depends(get_schedule_service)]
 
 
 def get_current_user(
