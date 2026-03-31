@@ -8,11 +8,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { GraduationCap, AlertCircle, Users, BookOpen, Shield } from "lucide-react"
 import type { UserRole } from "@/lib/types/database"
 
-const demoAccounts: { role: UserRole; email: string; label: string; icon: React.ReactNode }[] = [
-  { role: "student", email: "aliya.nurlan@student.aqbobek.kz", label: "Student", icon: <GraduationCap className="h-4 w-4" /> },
-  { role: "teacher", email: "teacher@aqbobek.kz", label: "Teacher", icon: <BookOpen className="h-4 w-4" /> },
-  { role: "parent", email: "parent@aqbobek.kz", label: "Parent", icon: <Users className="h-4 w-4" /> },
-  { role: "admin", email: "admin@aqbobek.kz", label: "Admin", icon: <Shield className="h-4 w-4" /> },
+const demoAccounts: { role: UserRole; email: string; password: string; label: string; icon: React.ReactNode }[] = [
+  { role: "student", email: "student.demo@aqbobek.kz", password: "Student123!", label: "Student", icon: <GraduationCap className="h-4 w-4" /> },
+  { role: "teacher", email: "teacher.demo@aqbobek.kz", password: "Teacher123!", label: "Teacher", icon: <BookOpen className="h-4 w-4" /> },
+  { role: "parent", email: "parent.demo@aqbobek.kz", password: "Parent123!", label: "Parent", icon: <Users className="h-4 w-4" /> },
+  { role: "admin", email: "admin.demo@aqbobek.kz", password: "Admin123!", label: "Admin", icon: <Shield className="h-4 w-4" /> },
 ]
 
 export default function LoginPage() {
@@ -37,13 +37,13 @@ export default function LoginPage() {
     }
   }
 
-  const handleDemoLogin = async (demoEmail: string) => {
+  const handleDemoLogin = async (demoEmail: string, demoPassword: string) => {
     setEmail(demoEmail)
-    setPassword("demo")
+    setPassword(demoPassword)
     setError("")
     setIsLoading(true)
 
-    const result = await login(demoEmail, "demo")
+    const result = await login(demoEmail, demoPassword)
     
     if (result.success) {
       window.location.href = "/dashboard"
@@ -128,7 +128,7 @@ export default function LoginPage() {
                   variant="outline"
                   size="sm"
                   className="gap-2 h-10"
-                  onClick={() => handleDemoLogin(account.email)}
+                  onClick={() => handleDemoLogin(account.email, account.password)}
                   disabled={isLoading}
                 >
                   {account.icon}
