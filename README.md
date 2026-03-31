@@ -1,278 +1,314 @@
-# Aqbobek Lyceum Unified School Portal
+# Aqbobek Lyceum Unified Portal
 
-A modern, feature-rich MVP for a unified school management system that brings together grades, achievements, events, and AI-powered mentoring.
+Unified school portal for Aqbobek Lyceum with role-based dashboards, academic analytics, AI mentoring, kiosk mode, and a smart schedule MVP.
 
-## Features
+## Overview
 
-### Core Features
-- **Role-Based Dashboards**: Separate interfaces for students, teachers, parents, and administrators
-- **Grade Management**: Track and visualize student performance across subjects
-- **Achievements System**: Record extracurricular accomplishments with tiered recognition
-- **School Events**: Centralized event management and announcements
-- **AI Mentor**: Personalized AI assistant that analyzes student progress and provides career guidance
-- **At-Risk Detection**: Teachers can identify students who need intervention
-- **Kiosk Mode**: Auto-scrolling bulletin board display for hallway screens
+The project solves a common school operations problem: grades, achievements, events, and internal coordination are usually scattered across separate systems or handled manually. This portal brings them into one digital environment for students, teachers, parents, and school administrators.
 
-### Technical Highlights
-- **Scalable Architecture**: Clean separation of concerns with hooks, components, and services
-- **Real-time Data**: Supabase integration for instant data synchronization
-- **Role-Based Access Control**: Row-level security with Supabase RLS policies
-- **Responsive Design**: Mobile-first design with Tailwind CSS
-- **AI Integration**: Vercel AI SDK 6 for advanced mentoring capabilities
+The platform combines:
 
-## Quick Start
+- a multi-role web portal
+- a dedicated backend API
+- Supabase authentication and storage
+- AI-powered mentoring and summaries
+- a smart schedule demo module with conflict-aware generation and rebuild logic
 
-### 1. Clone and Install
-```bash
-git clone <repo>
-cd <project>
-npm install
+## What Is Implemented
+
+### Core Product
+
+- Role-based authentication for `student`, `teacher`, `parent`, and `admin`
+- Student, teacher, parent, and admin dashboards
+- Grades management and viewing
+- Achievements recording and portfolio-style display
+- School events feed and management
+- Kiosk mode for public hallway displays
+- Online deployment for frontend and backend
+
+### AI Features
+
+- AI Mentor powered by Gemini API
+- Personalized guidance based on student profile and academic data
+- Teacher-facing risk visibility through analytics and at-risk views
+- Rule-based analytics on top of raw data instead of LLM-only logic
+
+### Smart Schedule MVP
+
+- Admin-only smart schedule page
+- Conflict-aware schedule generation
+- Support for teacher availability constraints
+- Support for room availability constraints
+- Support for stream lessons / parallel groups
+- Rebuild flow for teacher absence scenarios
+- Explainable list of schedule changes after rebuild
+
+## User Roles and Main Use Cases
+
+### Student
+
+- View grades and academic progress
+- See achievements and portfolio items
+- Track events and school announcements
+- Use AI Mentor for personalized study support
+- Check rankings and gamified performance blocks
+
+### Teacher
+
+- View students
+- Record grades
+- Record achievements
+- Monitor at-risk students
+- Use class-level analytics
+
+### Parent
+
+- View linked child dashboard
+- Monitor grades, achievements, and events
+- Use the portal in observer mode without teacher/admin controls
+
+### Admin
+
+- Monitor school-wide overview analytics
+- Manage events
+- Use kiosk mode content
+- Generate and rebuild smart schedules
+
+## Architecture
+
+### Frontend
+
+- `Next.js`
+- `React`
+- `TypeScript`
+- `Tailwind CSS`
+
+The frontend is responsible for:
+
+- authentication UX
+- role-based routing
+- dashboard views
+- admin schedule UI
+- kiosk presentation mode
+
+### Backend
+
+- `FastAPI`
+- `Pydantic`
+- `Uvicorn`
+
+The backend is responsible for:
+
+- API endpoints
+- role-aware business logic
+- analytics calculations
+- AI Mentor integration
+- schedule generation and rebuild logic
+- demo data seeding
+
+### Data and Auth
+
+- `Supabase Auth`
+- `Supabase Postgres`
+
+The database stores:
+
+- users
+- grades
+- achievements
+- events
+- role-linked relations such as parent-to-student access
+
+### AI Layer
+
+- `Gemini API`
+
+Used for:
+
+- AI Mentor responses
+- contextual academic guidance
+
+### Deployment
+
+- Frontend: `Vercel`
+- Backend: `Render`
+- Database/Auth: `Supabase`
+
+## High-Level Project Structure
+
+```text
+app/                         Next.js app routes
+components/                  Reusable UI and dashboard views
+lib/                         Frontend API client, auth context, types
+backend/app/api/             FastAPI routes and dependencies
+backend/app/services/        Business logic and AI/schedule services
+backend/app/models/          Backend domain and API models
+backend/tests/               Backend test suite
 ```
 
-### 2. Setup Supabase
-1. Go to [supabase.com](https://supabase.com)
-2. Create a new project
-3. In the SQL editor, copy and paste the entire contents of `supabase-schema.sql`
-4. Execute the SQL to create all tables and policies
+## Key Functional Areas
 
-### 3. Configure Environment Variables
-1. Copy `.env.example` to `.env.local`
-2. Add your Supabase credentials:
-   - `NEXT_PUBLIC_SUPABASE_URL`: Your project URL from Supabase settings
-   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`: Your anon public key from API settings
+### Dashboards
 
-### 4. Run Development Server
-```bash
+- Student dashboard with grades, achievements, events, and AI access
+- Teacher dashboard with student visibility and intervention signals
+- Parent dashboard with linked child observer mode
+- Admin dashboard with school-wide analytics and operational tools
+
+### AI Mentor
+
+The AI Mentor uses live backend data to generate role-aware academic guidance. It is integrated through the backend, not hardcoded in the frontend.
+
+### Analytics
+
+Implemented analytics include:
+
+- school overview metrics
+- student rankings
+- at-risk detection
+- grade-based summaries
+
+### Kiosk Mode
+
+Public display mode includes:
+
+- top students / rankings
+- featured events
+- recent achievements
+
+### Smart Schedule
+
+The schedule module is a focused hackathon MVP, not a full industrial timetable solver. It demonstrates:
+
+- constraint-aware generation
+- avoidance of direct conflicts
+- teacher absence handling
+- schedule rebuild logic
+- explainable change output
+
+## Strengths of the Project
+
+- Real multi-role product, not a single dashboard mockup
+- Dedicated backend instead of frontend-only fake APIs
+- Live data flow through Supabase
+- Working AI integration through external API
+- Practical school use cases instead of generic CRUD only
+- Smart schedule MVP gives the project a strong algorithmic module
+- Online deployment makes the project demo-ready
+
+## Demo Accounts
+
+These demo users are seeded through the backend helper script:
+
+- `student.demo@aqbobek.kz / Student123!`
+- `teacher.demo@aqbobek.kz / Teacher123!`
+- `parent.demo@aqbobek.kz / Parent123!`
+- `admin.demo@aqbobek.kz / Admin123!`
+
+## Running Locally
+
+### Frontend
+
+```powershell
+npm install
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser.
+### Backend
 
-## Login Credentials (Mock Data)
-
-The system uses mock data by default. You can test different roles:
-
-**Student:**
-- Email: `student1@aqbobek.edu`
-- Password: `password123`
-
-**Teacher:**
-- Email: `teacher1@aqbobek.edu`
-- Password: `password123`
-
-**Parent:**
-- Email: `parent1@aqbobek.edu`
-- Password: `password123`
-
-**Admin:**
-- Email: `admin@aqbobek.edu`
-- Password: `password123`
-
-## Project Structure
-
+```powershell
+cd backend
+..\.venv\Scripts\python -m pip install -e .[dev]
+..\.venv\Scripts\python -m uvicorn app.main:app --reload --port 8000
 ```
-├── app/
-│   ├── api/                    # API routes
-│   │   └── ai-mentor/         # AI mentor endpoint
-│   ├── dashboard/             # Dashboard pages
-│   │   ├── page.tsx          # Main dashboard router
-│   │   ├── grades/           # View grades
-│   │   ├── achievements/     # View achievements
-│   │   ├── events/           # View events
-│   │   └── ...
-│   ├── kiosk/                # Bulletin board kiosk mode
-│   ├── login/                # Authentication page
-│   └── page.tsx              # Landing page
-│
-├── components/
-│   ├── dashboard/            # Dashboard components
-│   │   ├── header.tsx
-│   │   ├── sidebar.tsx
-│   │   └── views/            # Role-specific dashboards
-│   ├── cards/                # Reusable card components
-│   │   ├── grade-card.tsx
-│   │   ├── achievement-card.tsx
-│   │   ├── event-card.tsx
-│   │   └── student-risk-card.tsx
-│   └── notifications/        # Notification components
-│
-├── lib/
-│   ├── supabase/             # Supabase client setup
-│   ├── context/              # Auth context
-│   ├── types/                # TypeScript definitions
-│   ├── mock/                 # Mock data
-│   └── services/             # Business logic
-│
-├── hooks/
-│   ├── use-auth.ts           # Auth hook
-│   └── use-fetch.ts          # Fetch wrapper hook
-│
-└── supabase-schema.sql       # Database schema
-```
-
-## Key Pages
-
-### Student Dashboard
-- View grades and performance trends
-- See achievements and awards
-- Check upcoming events
-- Access AI Mentor for personalized guidance
-- Track progress toward goals
-
-### Teacher Dashboard
-- View all students and their grades
-- Record new grades
-- Identify at-risk students
-- Award achievements
-- Manage class events
-
-### Parent Dashboard
-- Monitor child's grades and progress
-- View achievements
-- See event participation
-- Check attendance
-
-### Admin Dashboard
-- Analytics and school-wide statistics
-- Manage events and announcements
-- Monitor teacher and student performance
-- System administration
-
-### Kiosk Mode
-- Auto-scrolling bulletin board
-- Large fonts for visibility
-- Top student rankings
-- Upcoming events display
-- Performance highlights
-
-## AI Mentor
-
-The AI Mentor feature uses Vercel AI SDK to provide:
-- **Progress Analysis**: Detailed review of student performance
-- **Career Guidance**: Recommendations based on strengths
-- **Study Tips**: Personalized learning strategies
-- **Area Improvement**: Identification of weak areas with suggestions
-
-The AI Mentor analyzes:
-- Grade trends and patterns
-- Subject strengths and weaknesses
-- Achievement history
-- Attendance and participation
-
-## Authentication
-
-The app uses Supabase Auth with the following flow:
-1. User logs in on `/login` page
-2. Credentials are validated against Supabase auth
-3. User role is stored in the `users` table
-4. Auth context provides user data throughout the app
-5. Role-based routing controls access to features
-
-## Database Schema
-
-### Tables
-- **users**: User profiles with roles (student, teacher, parent, admin)
-- **grades**: Student grades recorded by teachers
-- **events**: School events and announcements
-- **achievements**: Student achievements and awards
-
-All tables include:
-- UUID primary keys
-- Created/updated timestamps
-- Row-level security policies
-- Appropriate indexes for performance
 
 ## Environment Variables
 
-```bash
-# Required
-NEXT_PUBLIC_SUPABASE_URL=https://xxxxx.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
+### Frontend
 
-# Optional
-SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+```env
+NEXT_PUBLIC_SUPABASE_URL=...
+NEXT_PUBLIC_SUPABASE_ANON_KEY=...
+NEXT_PUBLIC_BACKEND_URL=https://your-render-service.onrender.com/api
 ```
 
-## Development Tips
+### Backend
 
-### Adding a New Feature
-1. Create components in `components/` directory
-2. Add service logic in `lib/services/`
-3. Create new page in `app/dashboard/` if needed
-4. Use existing hooks (`useAuth`, `useFetch`)
-5. Follow the card component pattern for consistency
+```env
+SUPABASE_URL=...
+SUPABASE_ANON_KEY=...
+SUPABASE_SERVICE_ROLE_KEY=...
+GEMINI_API_KEY=...
+GEMINI_MODEL=...
+CORS_ORIGINS=["http://localhost:3000","https://your-vercel-project.vercel.app"]
+```
 
-### Working with the AI Mentor
-- The AI Mentor API endpoint is at `/api/ai-mentor`
-- It expects student data in the request body
-- Uses Vercel AI Gateway by default (no additional setup needed)
-- Can be customized with different AI providers
+See also:
 
-### Styling
-- Uses Tailwind CSS with custom design tokens in `globals.css`
-- Primary color: Deep blue (#1e3a8a range)
-- Secondary color: Blue (#3b82f6 range)
-- Accent color: Amber (#facc15 range)
-- All colors defined as CSS variables for easy customization
+- [`DEPLOY.md`](./DEPLOY.md)
+- [`backend/README.md`](./backend/README.md)
 
-## Deployment
+## Seed Demo Users
 
-### Deploy to Vercel
-```bash
+```powershell
+cd backend
+..\.venv\Scripts\python -m app.scripts.seed_demo_users
+```
+
+This creates demo users in Supabase Auth and corresponding profile rows in the database.
+
+## Tests
+
+### Backend
+
+```powershell
+cd backend
+..\.venv\Scripts\python -m pytest
+```
+
+### Frontend
+
+```powershell
 npm run build
-# Push to GitHub, connect to Vercel
 ```
 
-### Deploy Environment Variables
-1. Go to Vercel project settings
-2. Add environment variables:
-   - `NEXT_PUBLIC_SUPABASE_URL`
-   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-3. Redeploy
+## Example Demo Flow
 
-## Performance Optimizations
+For a short product demo:
 
-- Server-side rendering where possible
-- Optimized images with Next.js Image component
-- Data caching with SWR patterns
-- Efficient database queries with proper indexes
-- Lazy loading of dashboard components
+1. Log in as `teacher` and record a grade.
+2. Record an achievement for the student.
+3. Log in as `admin` and create an event.
+4. Open `Smart Schedule` and generate a schedule.
+5. Simulate teacher absence and rebuild the schedule.
+6. Log in as `student` and show updated dashboard data.
+7. Open `Kiosk Mode`.
+8. Ask AI Mentor for study guidance.
 
-## Security Features
+## Hackathon Alignment
 
-- Row-level security (RLS) in Supabase
-- Role-based access control
-- Secure session management
-- Protected API routes
-- Input validation and sanitization
+The project already demonstrates:
 
-## Future Enhancements
+- working role-based portal
+- analytics and AI integration
+- kiosk mode
+- dedicated backend architecture
+- smart schedule MVP with rebuild logic
 
-- Real-time notifications for grade updates
-- Parent-teacher messaging system
-- Advanced reporting and analytics
-- Mobile app version
-- Integration with external BilimClass API
-- Student goal-setting and tracking
-- Peer comparison (anonymized rankings)
-- Homework submission system
+The strongest parts for presentation are:
 
-## Contributing
+- end-to-end working product
+- AI Mentor with live data
+- analytics and risk visibility
+- smart schedule generation and absence handling
 
-To add new features:
-1. Follow the existing code structure
-2. Use TypeScript for type safety
-3. Create reusable components
-4. Add proper error handling
-5. Test across different roles
+## Known Scope Boundaries
 
-## Support
+This repository currently focuses on a strong hackathon MVP. Some areas remain intentionally lightweight compared to a full production school ERP:
 
-For issues or questions:
-1. Check the database schema in `supabase-schema.sql`
-2. Review environment variable setup in `.env.example`
-3. Check browser console for client-side errors
-4. Review server logs for API errors
+- BilimClass integration is represented through internal backend-driven data flows rather than a full external integration layer
+- Smart Schedule is a demo-grade planner, not a full enterprise scheduler
+- Some advanced AI scenarios from the expanded brief can still be extended further
 
 ## License
 
