@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
 import type { User, UserRole } from "@/lib/types/database"
-import { getCurrentUserFromBackend, loginWithBackend } from "@/lib/api/backend"
+import { getCurrentUserFromBackend, loginWithBackend, SessionExpiredError } from "@/lib/api/backend"
 
 const ACCESS_TOKEN_KEY = "aqbobek_access_token"
 

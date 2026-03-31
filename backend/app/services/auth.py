@@ -1,4 +1,5 @@
 from fastapi import HTTPException, status
+from supabase_auth.errors import AuthApiError
 
 from app.db.supabase import get_supabase_admin_client, get_supabase_client
 from app.models.auth import AuthSession, LoginRequest
@@ -8,12 +9,18 @@ from app.models.domain import UserProfile
 class AuthService:
     def login(self, credentials: LoginRequest) -> AuthSession:
         client = get_supabase_client()
-        auth_response = client.auth.sign_in_with_password(
-            {
-                "email": credentials.email,
-                "password": credentials.password,
-            }
-        )
+        try:
+            auth_response = client.auth.sign_in_with_password(
+                {
+                    "email": credentials.email,
+                    "password": credentials.password,
+                }
+            )
+        except AuthApiError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid email or password.",
+            ) from exc
 
         session = getattr(auth_response, "session", None)
         user = getattr(auth_response, "user", None)
@@ -34,7 +41,13 @@ class AuthService:
 
     def get_current_user(self, access_token: str) -> UserProfile:
         client = get_supabase_client()
-        auth_response = client.auth.get_user(access_token)
+        try:
+            auth_response = client.auth.get_user(access_token)
+        except AuthApiError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Session expired or access token is invalid.",
+            ) from exc
         user = getattr(auth_response, "user", None)
         if user is None:
             raise HTTPException(

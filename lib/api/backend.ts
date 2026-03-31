@@ -70,6 +70,14 @@ export interface AnalyticsOverview {
 
 const DEFAULT_BACKEND_URL = "http://localhost:8000/api"
 const ACCESS_TOKEN_KEY = "aqbobek_access_token"
+const SESSION_EXPIRED_MESSAGE = "Session expired or access token is invalid."
+
+export class SessionExpiredError extends Error {
+  constructor(message = SESSION_EXPIRED_MESSAGE) {
+    super(message)
+    this.name = "SessionExpiredError"
+  }
+}
 
 function getBackendBaseUrl() {
   return process.env.NEXT_PUBLIC_BACKEND_URL || DEFAULT_BACKEND_URL
@@ -122,6 +130,12 @@ async function authorizedFetch(path: string, options: RequestInit = {}) {
 
   if (!response.ok) {
     const message = await parseError(response, "Request failed")
+    if (response.status === 401) {
+      if (typeof window !== "undefined") {
+        localStorage.removeItem(ACCESS_TOKEN_KEY)
+      }
+      throw new SessionExpiredError(message)
+    }
     throw new Error(message)
   }
 
@@ -157,6 +171,12 @@ export async function getCurrentUserFromBackend(accessToken: string) {
 
   if (!response.ok) {
     const message = await parseError(response, "Failed to restore session")
+    if (response.status === 401) {
+      if (typeof window !== "undefined") {
+        localStorage.removeItem(ACCESS_TOKEN_KEY)
+      }
+      throw new SessionExpiredError(message)
+    }
     throw new Error(message)
   }
 
