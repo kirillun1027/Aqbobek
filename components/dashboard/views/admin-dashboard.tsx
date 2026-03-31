@@ -39,28 +39,35 @@ export function AdminDashboard({ user }: AdminDashboardProps) {
   const [topStudents, setTopStudents] = useState<{ name: string; average: number }[]>([])
   const [overview, setOverview] = useState<{ total_teachers: number; school_average: number; total_events: number } | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState("")
 
   useEffect(() => {
     async function loadData() {
-      const [studentsData, gradesData, achievementsData, eventsData, rankingsData, overviewData] = await Promise.all([
-        getStudentsFromBackend(),
-        getAllGradesFromBackend(3),
-        getAllAchievementsFromBackend(),
-        getEventsFromBackend(),
-        getRankingsFromBackend(),
-        getAnalyticsOverviewFromBackend(3),
-      ])
+      try {
+        setError("")
+        const [studentsData, gradesData, achievementsData, eventsData, rankingsData, overviewData] = await Promise.all([
+          getStudentsFromBackend(),
+          getAllGradesFromBackend(3),
+          getAllAchievementsFromBackend(),
+          getEventsFromBackend(),
+          getRankingsFromBackend(),
+          getAnalyticsOverviewFromBackend(3),
+        ])
 
-      setStudents(studentsData)
-      setGrades(gradesData)
-      setAchievements(achievementsData)
-      setEvents(eventsData)
-      setTopStudents(rankingsData.slice(0, 5).map(r => ({ name: r.name, average: r.average })))
-      setOverview(overviewData)
-      setIsLoading(false)
+        setStudents(studentsData)
+        setGrades(gradesData)
+        setAchievements(achievementsData)
+        setEvents(eventsData)
+        setTopStudents(rankingsData.slice(0, 5).map(r => ({ name: r.name, average: r.average })))
+        setOverview(overviewData)
+      } catch (loadError) {
+        setError(loadError instanceof Error ? loadError.message : "Failed to load admin dashboard.")
+      } finally {
+        setIsLoading(false)
+      }
     }
 
-    loadData()
+    void loadData()
   }, [])
 
   if (isLoading) {
@@ -68,6 +75,22 @@ export function AdminDashboard({ user }: AdminDashboardProps) {
       <div className="flex items-center justify-center h-64">
         <div className="w-8 h-8 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin" />
       </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Admin Dashboard</CardTitle>
+          <CardDescription>School-wide overview and management</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            {error}
+          </div>
+        </CardContent>
+      </Card>
     )
   }
 
